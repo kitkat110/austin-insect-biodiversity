@@ -1,5 +1,5 @@
-import pyinaturalist as pin
-import pandas as pd
+import pyinaturalist as pin # pyright: ignore[reportMissingImports]
+import pandas as pd # pyright: ignore[reportMissingModuleSource]
 
 records = []
 
