@@ -1,5 +1,5 @@
 import logging
-import pandas as pd
+import pandas as pd # pyright: ignore[reportMissingModuleSource]
 
 
 # -------------------------
