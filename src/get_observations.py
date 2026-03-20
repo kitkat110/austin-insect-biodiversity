@@ -1,13 +1,13 @@
 import logging
+import sys
+import time
 import pyinaturalist as pin # pyright: ignore[reportMissingImports]
 import pandas as pd # pyright: ignore[reportMissingModuleSource]
-
-records = []
 
 # -------------------------
 # Functions
 # -------------------------
-def retrieve_insect_records(pages: int) -> list:
+def retrieve_insect_records(pages: int = 25) -> list:
     """
     Searches the iNaturalist database for Insecta entries in Austin and retrieves their coordinates.
 
@@ -18,31 +18,49 @@ def retrieve_insect_records(pages: int) -> list:
         records: List of matching records with coordinates.
     """
 
+    records = []
+
     for page in range(1, pages+1):
         obs = pin.get_observations(
-            lat=30.2895,    # UT Austin area
-            lng=-97.7368,
-            radius=10,
-            taxon_name = "Insecta",
+            nelat=30.7,
+            nelng=-97.5,
+            swlat=30.0,
+            swlng=-97.9,
+            taxon_id = 47158, # Insecta class taxon ID
             per_page = 200,
-            page=page,
-            verifiable=True
+            page=page
         )
 
+        if not obs["results"]:
+            logging.info(f"No results on page {page}, stopping early.")
+            break
+
         for o in obs["results"]:
-            if o.get("geojson") and o.get("taxon"):
-                records.append({
-                    "id": o.get("id"),
-                    "class": o["taxon"].get("species_guess", o["taxon"]["name"]),
-                    "latitude": o["geojson"]["coordinates"][1],
-                    "longitude": o["geojson"]["coordinates"][0]
-                })
+            taxon = o.get("taxon")
+            geo = o.get("geojson")
+
+            if not taxon or not geo:
+                continue
+
+            if taxon.get("rank") != "species":  # Skip non-species level observations
+                continue
+
+            records.append({
+                "id": o.get("id"),
+                "taxon_id": taxon["id"],
+                "species": taxon["name"],
+                "latitude": geo["coordinates"][1],
+                "longitude": geo["coordinates"][0]
+            })
+
+        time.sleep(1)  # Avoid hitting iNaturalist's rate limit
     
     if len(records) == 0:
-        logging.warning("Unable to retrieve any records")
+        sys.exit("Unable to retrieve any records")
     else:
         logging.info(f"{len(records)} total records retrieved")
         return records
+
 
 def save_records(recs: list, output_file: str) -> pd.DataFrame:
     """

@@ -3,7 +3,7 @@ import argparse
 import socket
 
 from get_observations import retrieve_insect_records, save_records
-from calc_species_richness import create_grid
+from calc_species_richness import create_grid, calc_richness, save_species_richness
 
 
 # -------------------------
@@ -31,13 +31,19 @@ logging.basicConfig(level=args.loglevel, format=format_str)
 # -------------------------
 def main():
     logging.info("Retrieving records from iNaturalist")
-    insect_recs = retrieve_insect_records(25)
+    insect_recs = retrieve_insect_records()
 
     logging.info("Writing records to csv file")
     records_df = save_records(insect_recs, "insect_records.csv")
 
     logging.info("Generating map grid")
-    create_grid(records_df)
+    records_df = create_grid(records_df)
+
+    logging.info("Calculating species richness by grid")
+    species_richness = calc_richness(records_df)
+
+    logging.info("Writing species richness calculations to csv file")
+    save_species_richness(species_richness, "species_richness.csv")
 
 
 if __name__ == "__main__":
