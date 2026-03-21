@@ -71,5 +71,6 @@ ax.tick_params(labelsize=8)
 top_patch = mpatches.Patch(facecolor="none", edgecolor="#e63946", linewidth=2, label="Top 10 biodiversity cells")
 ax.legend(handles=[top_patch], loc="lower left", fontsize=9, framealpha=0.9)
 
+plt.savefig("austin_insect_richness.png", dpi=150, bbox_inches="tight")
 plt.show()
 
