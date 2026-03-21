@@ -1,11 +1,11 @@
 import logging
-import pandas as pd # pyright: ignore[reportMissingModuleSource]
-
+import pandas as pd 
+import numpy as np
 
 # -------------------------
 # Constants
 # -------------------------
-GRID_SIZE = 0.03 # ~3 km
+GRID_SIZE = 0.025 # ~2.5 km
 
 
 # -------------------------
@@ -33,15 +33,16 @@ def create_grid(rec_df: pd.DataFrame) -> pd.DataFrame:
 
     return rec_df
 
+
 def calc_richness(rec_df: pd.DataFrame) -> pd.DataFrame:
     """
-    Groups data by map grid and calculates species richness.
+    Groups data by map grid and calculates species richness normalized by observation count, with a minimum observation filter to exclude sparse cells.
 
     Args:
         rec_df: List of records as dataframe.
 
     Returns:
-        richness: Species richness calculations as dataframe.
+        richness: Species richness calculations as dataframe, sorted by richness rank.
     """
 
     richness = rec_df.groupby(["lat_bin", "lon_bin"]).agg(
@@ -49,11 +50,16 @@ def calc_richness(rec_df: pd.DataFrame) -> pd.DataFrame:
         observation_count=("species", "count")
     ).reset_index()
 
-    richness["normalized_richness"] = (
-        richness["species_count"] / richness["observation_count"]
-    )
+    richness = richness[richness["observation_count"] >= 5]
 
-    return richness
+    richness["normalized_richness"] = richness["species_count"] / richness["observation_count"]
+    richness["richness_rank"] = richness.sort_values(
+        ["normalized_richness", "species_count"], ascending=[False, False]
+    ).assign(richness_rank=range(1, len(richness) + 1))["richness_rank"]
+
+    logging.info(f"Species richness calculated for {len(richness)} grid cells")
+    return richness.sort_values("richness_rank")
+
 
 def save_species_richness(richness: pd.DataFrame, output_file: str) -> None:
     """

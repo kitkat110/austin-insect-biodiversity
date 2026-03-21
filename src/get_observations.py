@@ -1,8 +1,8 @@
 import logging
 import sys
 import time
-import pyinaturalist as pin # pyright: ignore[reportMissingImports]
-import pandas as pd # pyright: ignore[reportMissingModuleSource]
+import pyinaturalist as pin
+import pandas as pd 
 
 # -------------------------
 # Functions
