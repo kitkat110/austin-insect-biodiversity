@@ -1,6 +1,5 @@
 import logging
 import pandas as pd 
-import numpy as np
 
 # -------------------------
 # Constants
@@ -50,12 +49,14 @@ def calc_richness(rec_df: pd.DataFrame) -> pd.DataFrame:
         observation_count=("species", "count")
     ).reset_index()
 
-    richness = richness[richness["observation_count"] >= 5]
-
     richness["normalized_richness"] = richness["species_count"] / richness["observation_count"]
-    richness["richness_rank"] = richness.sort_values(
+
+    # Only rank cells with >= 50 observations
+    rankable = richness[richness["observation_count"] >= 50].sort_values(
         ["normalized_richness", "species_count"], ascending=[False, False]
-    ).assign(richness_rank=range(1, len(richness) + 1))["richness_rank"]
+    ).assign(richness_rank=range(1, len(richness[richness["observation_count"] >= 50]) + 1))
+
+    richness = richness.merge(rankable[["lat_bin", "lon_bin", "richness_rank"]], on=["lat_bin", "lon_bin"], how="left")
 
     logging.info(f"Species richness calculated for {len(richness)} grid cells")
     return richness.sort_values("richness_rank")
